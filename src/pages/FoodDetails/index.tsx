@@ -56,7 +56,7 @@ interface Food {
   description: string;
   price: number;
   image_url: string;
-  formattedPrice: string;
+  formattedValue: string;
   extras: Extra[];
 }
 
@@ -74,7 +74,16 @@ const FoodDetails: React.FC = () => {
   useEffect(() => {
     async function loadFood(): Promise<void> {
       const response = await api.get<Food>(`/foods/${routeParams.id}`);
-      setFood(response.data);
+
+      const favorites = await api.get<Food[]>('/favorites');
+
+      const favoritedFood = favorites.data.filter(
+        item => item.id === response.data.id,
+      );
+
+      if (favoritedFood.length !== 0) {
+        setIsFavorite(true);
+      }
 
       const formattedExtras = response.data.extras.map(item => {
         return {
@@ -83,6 +92,7 @@ const FoodDetails: React.FC = () => {
         };
       });
 
+      setFood(response.data);
       setExtras(formattedExtras);
     }
 
@@ -117,8 +127,16 @@ const FoodDetails: React.FC = () => {
     }
   }
 
-  const toggleFavorite = useCallback(() => {
-    // Toggle if food is favorite or not
+  const toggleFavorite = useCallback(async () => {
+    if (!isFavorite) {
+      setIsFavorite(!isFavorite);
+
+      await api.post('/favorites', food);
+    } else {
+      setIsFavorite(!isFavorite);
+
+      await api.delete(`/favorites/${food.id}`);
+    }
   }, [isFavorite, food]);
 
   const cartTotal = useMemo(() => {
@@ -130,11 +148,18 @@ const FoodDetails: React.FC = () => {
       return accumulator + extrasSubtotal;
     }, 0);
 
-    return foodTotal + extrasTotal;
+    return formatValue(foodTotal + extrasTotal);
   }, [extras, food, foodQuantity]);
 
   async function handleFinishOrder(): Promise<void> {
-    // Finish the order and save on the API
+    const orderData = {
+      ...food,
+      formattedValue: cartTotal,
+      quantity: foodQuantity,
+      ...extras,
+    };
+
+    await api.post('/orders', orderData);
   }
 
   // Calculate the correct icon name
@@ -175,7 +200,7 @@ const FoodDetails: React.FC = () => {
             <FoodContent>
               <FoodTitle>{food.name}</FoodTitle>
               <FoodDescription>{food.description}</FoodDescription>
-              <FoodPricing>{food.formattedPrice}</FoodPricing>
+              <FoodPricing>{food.formattedValue}</FoodPricing>
             </FoodContent>
           </Food>
         </FoodsContainer>
