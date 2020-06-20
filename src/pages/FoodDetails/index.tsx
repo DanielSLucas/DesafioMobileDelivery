@@ -156,7 +156,7 @@ const FoodDetails: React.FC = () => {
       ...food,
       formattedValue: cartTotal,
       quantity: foodQuantity,
-      ...extras,
+      extras,
     };
 
     await api.post('/orders', orderData);
