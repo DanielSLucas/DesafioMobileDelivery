@@ -60,25 +60,13 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadFoods(): Promise<void> {
-      if (selectedCategory) {
-        const filteredByCategory = await api.get<Food[]>('/foods', {
-          params: {
-            category_like: selectedCategory,
-          },
-        });
-        setFoods(filteredByCategory.data);
-      } else if (searchValue) {
-        const filteredBySearch = await api.get<Food[]>('/foods', {
-          params: {
-            name_like: searchValue,
-          },
-        });
-        setFoods(filteredBySearch.data);
-      } else {
-        const unfilteredFoods = await api.get<Food[]>('/foods');
-
-        setFoods(unfilteredFoods.data);
-      }
+      const response = await api.get<Food[]>('/foods', {
+        params: {
+          category_like: selectedCategory,
+          name_like: searchValue,
+        },
+      });
+      setFoods(response.data);
     }
 
     loadFoods();
@@ -94,7 +82,11 @@ const Dashboard: React.FC = () => {
   }, []);
 
   function handleSelectCategory(id: number): void {
-    setSelectedCategory(id);
+    if (selectedCategory === id) {
+      setSelectedCategory(undefined);
+    } else {
+      setSelectedCategory(id);
+    }
   }
 
   return (

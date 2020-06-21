@@ -75,6 +75,17 @@ const FoodDetails: React.FC = () => {
     async function loadFood(): Promise<void> {
       const response = await api.get<Food>(`/foods/${routeParams.id}`);
 
+      setFood(response.data);
+
+      const formattedExtras = response.data.extras.map(item => {
+        return {
+          ...item,
+          quantity: 0,
+        };
+      });
+
+      setExtras(formattedExtras);
+
       const favorites = await api.get<Food[]>('/favorites');
 
       const favoritedFood = favorites.data.filter(
@@ -84,16 +95,6 @@ const FoodDetails: React.FC = () => {
       if (favoritedFood.length !== 0) {
         setIsFavorite(true);
       }
-
-      const formattedExtras = response.data.extras.map(item => {
-        return {
-          ...item,
-          quantity: 0,
-        };
-      });
-
-      setFood(response.data);
-      setExtras(formattedExtras);
     }
 
     loadFood();
